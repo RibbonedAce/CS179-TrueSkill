@@ -4,6 +4,8 @@ from trueskill import *
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+import os
+    
 
 players = ["Hungrybox", "Armada", "Leffen", "Plup", "Mango", \
            "Mew2King", "Zain", "Wizzrobe", "aMSa", "Axe"]
@@ -67,7 +69,12 @@ def date_from_text(text):
     return datetime.date(int(attr[0]), int(attr[1]), int(attr[2]))
 
 if __name__ == "__main__":
-    driver = webdriver.Chrome()
+    if (os.name == "posix"):
+        cwd = os.getcwd()
+        cwd += '/chromedriver'
+        driver = webdriver.Chrome(cwd)
+    else:
+        driver = webdriver.Chrome()
     driver.implicitly_wait(30)
     
     env = TrueSkill(draw_probability=0)
