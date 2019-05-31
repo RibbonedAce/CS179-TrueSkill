@@ -8,9 +8,20 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 import os
     
-
+read_from_csv = True
 players = ["Hungrybox", "Armada", "Leffen", "Plup", "Mango", \
            "Mew2King", "Zain", "Wizzrobe", "aMSa", "Axe"]
+
+def get_driver():
+    result = None
+    if (os.name == "posix"):
+        cwd = os.getcwd()
+        cwd += '/chromedriver'
+        result = webdriver.Chrome(cwd)
+    else:
+        result = webdriver.Chrome()
+    result.implicitly_wait(30)
+    return result
 
 def get_inputs(driver):
     driver.get("https://liquipedia.net/smash/Special:RunQuery/Match_history?Head_to_head_query%5Bgame%5D=Melee")
@@ -64,13 +75,24 @@ def get_matches(driver, matches, player1, player2):
                 matches.append((match[0], match[1], date))
             match_queue = []
 
+def get_matches_csv(file_name="matches.csv"):
+    result = []
+    with open(file_name, mode="r") as match_file:
+        reader = csv.reader(match_file, delimiter=",")
+        for row in reader:
+            result.append((int(row[0]), int(row[1]), date_from_text(row[2])))
+    return result
+
 def store_matches(matches, file_name="matches.csv"):
-    with open(file_name, mode="w", newline="") as match_file:
-        writer = csv.writer(match_file, delimiter=",", quotechar="\"", quoting=csv.QUOTE_MINIMAL)
-        matches.sort(key=lambda x: max(x[0], x[1]), reverse=True)
-        matches.sort(key=lambda x: min(x[0], x[1]), reverse=True)
-        matches.sort(key=lambda x: x[2])
-        writer.writerows(matches)
+    try:
+        with open(file_name, mode="w", newline="") as match_file:
+            writer = csv.writer(match_file, delimiter=",", quotechar="\"", quoting=csv.QUOTE_MINIMAL)
+            matches.sort(key=lambda x: min(x[0], x[1]), reverse=True)
+            matches.sort(key=lambda x: x[0] + x[1], reverse=True)
+            matches.sort(key=lambda x: x[2])
+            writer.writerows(matches)
+    except:
+        print("File already open")
 
 def apply_matches(matches, ratings):
     matches.sort(key=lambda x: x[2])
@@ -79,31 +101,32 @@ def apply_matches(matches, ratings):
         ratings[match[0]] = new_r1
         ratings[match[1]] = new_r2
 
+def display_results(data, safety=0):
+    data.sort(key=lambda x: x[1].mu - x[1].sigma*safety, reverse=True)
+    for i in range(len(data)):
+        print("{0:>2}: {1:<9} ({2:.2f})".format(i+1, data[i][0], data[i][1].mu - data[i][1].sigma*safety))
+
 def date_from_text(text):
     attr = text.split("-")
     return datetime.date(int(attr[0]), int(attr[1]), int(attr[2]))
 
 if __name__ == "__main__":
-    if (os.name == "posix"):
-        cwd = os.getcwd()
-        cwd += '/chromedriver'
-        driver = webdriver.Chrome(cwd)
-    else:
-        driver = webdriver.Chrome()
-    driver.implicitly_wait(30)
-    
     env = TrueSkill(draw_probability=0)
     ratings = [Rating() for p in players]
     matches = []
-    
-    for i in range(len(ratings)):
-        for j in range(i+1, len(ratings)):
-            inputs = get_inputs(driver)
-            input_values(driver, inputs, players[i], players[j])
-            get_matches(driver, matches, i, j)         
-    driver.quit()
 
-    store_matches(matches)
+    if read_from_csv:
+        matches = get_matches_csv()
+    else:
+        driver = get_driver()
+        for i in range(len(ratings)):
+            for j in range(i+1, len(ratings)):
+                inputs = get_inputs(driver)
+                input_values(driver, inputs, players[i], players[j])
+                get_matches(driver, matches, i, j)         
+        driver.quit()
+        store_matches(matches)
+
     apply_matches(matches, ratings)
-    print(dict(zip(players, ratings)))
-
+    display_results(list(zip(players, ratings)), 0)
+    
