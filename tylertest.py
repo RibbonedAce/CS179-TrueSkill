@@ -1,6 +1,7 @@
 import time
 import datetime
 import csv
+import numpy as np
 
 from trueskill import *
 from selenium import webdriver
@@ -118,30 +119,51 @@ def store_matches(matches, file_name="matches.csv"):
     except:
         print("File already open")
 
-def apply_matches(matches, ratings):
-    matches.sort(key=lambda x: x[2])
+def apply_matches(matches):
+    result = []
+    ratings = [Rating() for p in players]
+    current_date = matches[0][2]
     for match in matches:
-        new_r1, new_r2 = rate_1vs1(ratings[match[0]], ratings[match[0]])
+        if current_date != match[2]:
+            result.append(ratings)
+            ratings = ratings[:]
+            current_date = match[2]
+        new_r1, new_r2 = rate_1vs1(ratings[match[0]], ratings[match[1]])
         ratings[match[0]] = new_r1
         ratings[match[1]] = new_r2
+    result.append(ratings)
+    num_dates = len(unique_dates([m[2] for m in matches]))
+    date_result = [[None for d in range(num_dates)] for p in players]
+    for i in range(len(date_result)):
+        for j in range(len(date_result[i])):
+            date_result[i][j] = result[j][i]
+    return date_result
 
 def display_results(data, safety=0):
     data.sort(key=lambda x: x[1].mu - x[1].sigma*safety, reverse=True)
     for i in range(len(data)):
-        print("{0:>3}: {1:<23} ({2:.2f})".format(i+1, data[i][0], data[i][1].mu - data[i][1].sigma*safety))
+        print("{0:>3}: {1:<23} ({2:.2f}) (Rank {3})".format(i+1, data[i][0], data[i][1].mu - data[i][1].sigma*safety, players.index(data[i][0]) + 1))
 
 def date_from_text(text):
     if "-" in text:
         attr = text.split("-")
         return datetime.date(int(attr[0]), int(attr[1]), int(attr[2]))
     else:
-        attr= text.split("/")
+        attr = text.split("/")
         return datetime.date(int(attr[2]), int(attr[0]), int(attr[1]))
 
+def copy_rating(rating):
+    return Rating(rating.mu, rating.sigma)
+
+def unique_dates(dates):
+    result = []
+    for date in dates:
+        if date not in result:
+            result.append(date)
+    return result
 
 if __name__ == "__main__":
     env = TrueSkill(draw_probability=0)
-    ratings = [Rating() for p in players]
     matches = []
 
     if read_from_csv:
@@ -155,6 +177,6 @@ if __name__ == "__main__":
         driver.quit()
         store_matches(matches)
 
-    apply_matches(matches, ratings)
-    display_results(list(zip(players, ratings)), 0)
+    ratings_over_time = apply_matches(matches)
+    #display_results(list(zip(players, ratings_over_time[-1])), 0)
     
