@@ -8,6 +8,8 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 import os
+
+import graph
     
 read_from_csv = True
 players = ["Hungrybox", "Armada", "Leffen", "Plup", "Mango", \
@@ -178,5 +180,6 @@ if __name__ == "__main__":
         store_matches(matches)
 
     ratings_over_time = apply_matches(matches)
+    graph.plot_stats(unique_dates([m[2] for m in matches]), ratings_over_time[:10], players[:10])
     #display_results(list(zip(players, ratings_over_time[-1])), 0)
     

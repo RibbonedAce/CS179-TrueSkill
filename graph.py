@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 
 def plot_stats(xs, ys, players):
-	plt.title('TrueSkill Rankings Over Time')
-	plt.ylabel('TrueSkill Ranking')
+	plt.title('TrueSkill Ratings Over Time')
+	plt.ylabel('TrueSkill Ranting')
 	plt.xlabel('Date')
 
 	index = 0
