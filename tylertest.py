@@ -180,6 +180,6 @@ if __name__ == "__main__":
         store_matches(matches)
 
     ratings_over_time = apply_matches(matches)
-    graph.plot_stats(unique_dates([m[2] for m in matches]), ratings_over_time[:10], players[:10])
-    #display_results(list(zip(players, ratings_over_time[-1])), 0)
+    graph.plot_stats(unique_dates([m[2] for m in matches]), ratings_over_time[::10], players[::10], 3)
+    display_results(list(zip(players, [r[-1] for r in ratings_over_time])), 3)
     
