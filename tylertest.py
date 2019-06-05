@@ -143,8 +143,20 @@ def apply_matches(matches):
 
 def display_results(data, safety=0):
     data.sort(key=lambda x: x[1].mu - x[1].sigma*safety, reverse=True)
+    max_diff, min_diff = (0, 0), (0, 0)
+    avg_diff = 0
     for i in range(len(data)):
-        print("{0:>3}: {1:<23} ({2:.2f}) (Rank {3})".format(i+1, data[i][0], data[i][1].mu - data[i][1].sigma*safety, players.index(data[i][0]) + 1))
+        diff = np.log(float(players.index(data[i][0])+1) / (i+1)) / np.log(2)
+        if diff > max_diff[0]:
+            max_diff = (diff, i)
+        elif diff < min_diff[0]:
+            min_diff = (diff, i)
+        avg_diff += abs(diff)
+        print("{0:>3}: {1:<23} ({2:5.2f}, {3:+5.3f})".format(i+1, data[i][0], data[i][1].mu - data[i][1].sigma*safety, diff))
+    avg_diff /= len(data)
+    print("Most underrated:", data[max_diff[1]][0])
+    print("Most overrated:", data[min_diff[1]][0])
+    print("Average deviation:", avg_diff)
 
 def date_from_text(text):
     if "-" in text:
