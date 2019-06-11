@@ -188,8 +188,8 @@ def apply_matches(matches, use_weights=False):
             date_result[i][j] = result[j][i]
     return date_result
 
-def display_results(data, safety=0):
-    data.sort(key=lambda x: x[1].mu - x[1].sigma*safety, reverse=True)
+def display_results(data):
+    data.sort(key=lambda x: env.expose(x[1]), reverse=True)
     max_diff, min_diff = (0, 0), (0, 0)
     avg_diff = 0
     for i in range(len(data)):
@@ -199,7 +199,7 @@ def display_results(data, safety=0):
         elif diff < min_diff[0]:
             min_diff = (diff, i)
         avg_diff += abs(diff)
-        print("{0:>3}: {1:<23} ({2:5.2f}, {3:+5.3f})".format(i+1, data[i][0], data[i][1].mu - data[i][1].sigma*safety, diff))
+        print("{0:>3}: {1:<23} ({2:5.2f}, {3:+5.3f})".format(i+1, data[i][0], env.expose(data[i][1]), diff))
     avg_diff /= len(data)
     print("Most underrated:", data[max_diff[1]][0])
     print("Most overrated:", data[min_diff[1]][0])
@@ -238,7 +238,7 @@ if __name__ == "__main__":
         driver.quit()
         store_matches(matches)
 
-    ratings_over_time = apply_matches(matches, True)
-    graph.plot_stats(unique_dates([m[3] for m in matches]), ratings_over_time[::10], players[::10], 3)
-    display_results(list(zip(players, [r[-1] for r in ratings_over_time])), 3)
+    ratings_over_time = apply_matches(matches, False)
+    graph.plot_stats(unique_dates([m[3] for m in matches]), ratings_over_time[:10], players[:10], 3)
+    display_results(list(zip(players, [r[-1] for r in ratings_over_time])))
     

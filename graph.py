@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 def plot_stats(xs, ys, players, safety):
 	plt.title('TrueSkill Ratings Over Time')
-	plt.ylabel('TrueSkill Ranting')
+	plt.ylabel('TrueSkill Rating')
 	plt.xlabel('Date')
 
 	index = 0
